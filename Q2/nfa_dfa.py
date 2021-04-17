@@ -23,19 +23,19 @@ dfa['states'] = power_set(nfa['states'])
 
 dfa['letters'] = nfa['letters']
 
-dfa['transition_function'] = []
+dfa['transition_matrix'] = []
 
 
 for states in dfa['states']:
     for inp in nfa['letters']:
         temp = []
         for state in states:
-            for func in nfa['transition_function']:
+            for func in nfa['transition_matrix']:
                 if state == func[0] and inp == func[1]:
                     temp.append(func[2])
-        dfa['transition_function'].append([states, inp, temp])
+        dfa['transition_matrix'].append([states, inp, temp])
 
-dfa['start_states'] = nfa['start_states']
+dfa['start_states'] = [nfa['start_states']]
 dfa['final_states'] = []
 for states in dfa['states']:
     for state in states:

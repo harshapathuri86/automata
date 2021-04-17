@@ -32,7 +32,7 @@
         "a",
         "b"
     ],
-    "transition_function": [
+    "transition_matrix": [
         [
             [],
             "a",
@@ -179,7 +179,9 @@
         ]
     ],
     "start_states": [
-        "Q0"
+        [
+            "Q0"
+        ]
     ],
     "final_states": [
         [
