@@ -1,9 +1,10 @@
+import json
 operators = {
     "+": 1,
     '.': 2,
     "*": 3,
 }
-brackets = set(["(", ")"])
+brackets = ["(", ")"]
 num = 0
 stack = []
 E = '$'
@@ -33,21 +34,16 @@ def topostfix(infix):
         elif c in brackets:
 
             if c == ")":
-                try:
-                    while stack[-1] != "(":
-                        postfix.append(stack.pop())
-                except IndexError:
-                    raise ValueError("'(' not found when popping")
-
+                while stack[-1] != "(":
+                    postfix.append(stack.pop())
                 stack.pop()
             else:
                 stack.append(c)
         else:
-
             postfix.append(c)
 
     postfix.extend(token for token in reversed(stack) if token in operators)
-    print(postfix)
+    # print(postfix)
     return postfix
 
 
@@ -63,8 +59,6 @@ def createNew(c):
     nfa['start_states'] = [a]
     nfa['final_states'] = [b]
     nfa['transition_matrix'].append([a, c, b])
-    print("new nfa", c)
-    print(nfa)
     return nfa
 
 
@@ -107,8 +101,10 @@ def star(n, c):
     nfa['final_states'] = n['final_states']
 
     nfa['transition_matrix'] = n['transition_matrix']
-    for lol in n['final_states']:
-        nfa['transition_matrix'].append([lol, E, n['start_states'][0]])
+    for l1 in n['start_states']:
+        for l2 in n['final_states']:
+            nfa['transition_matrix'].append([l2, E, l1])
+        nfa['transition_matrix'].append([nfa['start_states'][0], E, l1])
     nfa['final_states'].append(a)
 
     return nfa
@@ -124,8 +120,9 @@ def concat(n1, n2, c):
     nfa['start_states'] = n1['start_states']
     nfa['final_states'] = n2['final_states']
     nfa['transition_matrix'] = n1['transition_matrix']+n2['transition_matrix']
-    nfa['transition_matrix'].append(
-        [n1['start_states'][0], E, n2['start_states'][0]])
+    for l1 in n1['final_states']:
+        for l2 in n2['start_states']:
+            nfa['transition_matrix'].append([l1, E, l2])
 
     return nfa
 
@@ -153,23 +150,27 @@ def nfa(postfix):
 
 
 def main():
-    infix = input()
-    print("input: ", infix)
-    print()
-
+    # infix = input()
+    with open('input.json') as reg:
+        infix = json.load(reg)['regex']
+    # print("input: ", infix)
+    i = 0
     while True:
-        print(i)
         if len(infix) < 2:
             break
-        if infix[i].isalnum() and infix[i+1].isalnum():
+        if (infix[i].isalnum() and infix[i+1].isalnum()) or (infix[i] == ')' and infix[i+1].isalnum()) or (infix[i].isalnum() and infix[i+1] == '(') or (infix[i] == '*' and infix[i+1].isalnum()) or (infix[i] == '*' and infix[i+1] == '('):
             infix = infix[:i+1]+'.'+infix[i+1:]
-            print(infix)
+            # print(infix)
         i += 1
         if(i == len(infix)-1):
             break
 
     postfix = topostfix(infix)
-    print("postfix: ", postfix)
-    print()
-    nfa = nfa(postfix)
-    print(nfa)
+    # print("postfix: ", postfix)
+    final = nfa(postfix)
+    # print(final)
+    with open('output.json', 'w') as outjson:
+        outjson.write(json.dumps(final, indent=4))
+
+
+main()
