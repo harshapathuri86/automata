@@ -34,45 +34,26 @@ def convertGnfa(dfa):
 
 def update(R_is, R_ss, R_sj, R_ij):
     val = ''
-    if R_is == []:
-        val += ''
-    else:
-        a = [str(i) for i in R_is]
-        a = '+'.join(a)
-        if a != '':
-            val += '('+a+')'
-        else:
-            val += ''
-    print(type(R_is))
-    # R_is = '('+str(R_is)+')'
-
     if R_ss == []:
-        val += ''
+        val = ''
     else:
         a = [str(i) for i in R_ss]
         a = '+'.join(a)
         if a != '':
-            val += '('+a+')*'
-        else:
-            val += ''
-    print(type(R_ss))
+            val = '('+a+')*'
 
-    if R_sj == []:
-        val += ''
-    else:
-        a = [str(i) for i in R_sj]
-        a = '+'.join(a)
-        if a != '':
-            val += '('+a+')'
-        else:
-            val += ''
-    print(type(R_sj))
-
+    if R_is == [] or R_sj == []:
+        return R_ij
+    a = [str(i) for i in R_is]
+    a = '+'.join(a)
+    if a != '':
+        val = '('+a+')'+val
+    a = [str(i) for i in R_sj]
+    a = '+'.join(a)
+    if a != '':
+        val = val+'('+a+')'
     if R_ij != '':
-        if R_sj != '':
-            val += '+'+str(R_ij)
-    else:
-        val += ''
+        val += '+'+str(R_ij)
     return val
 
 
