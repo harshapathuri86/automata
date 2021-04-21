@@ -1,4 +1,5 @@
 import json
+import sys
 from itertools import combinations
 
 
@@ -10,37 +11,43 @@ def power_set(items):
     return powerset
 
 
-with open('input.json', 'r') as input:
-    nfa = json.loads(input.read())
+def main():
+    if(len(sys.argv) != 3):
+        print("not enough arguments")
+        quit()
+    with open(sys.argv[1]) as inp:
+        nfa = json.loads(inp.read())
 
+    dfa = {}
+    numstates = 1
+    for i in range(len(nfa["states"])):
+        numstates = numstates*2
 
-dfa = {}
-numstates = 1
-for i in range(len(nfa["states"])):
-    numstates = numstates*2
+    dfa['states'] = power_set(nfa['states'])
 
-dfa['states'] = power_set(nfa['states'])
+    dfa['letters'] = nfa['letters']
 
-dfa['letters'] = nfa['letters']
+    dfa['transition_function'] = []
 
-dfa['transition_matrix'] = []
+    for states in dfa['states']:
+        for inp in nfa['letters']:
+            temp = []
+            for state in states:
+                for func in nfa['transition_function']:
+                    if state == func[0] and inp == func[1]:
+                        if func[2] not in temp:
+                            temp.append(func[2])
+            dfa['transition_function'].append([states, inp, temp])
 
-
-for states in dfa['states']:
-    for inp in nfa['letters']:
-        temp = []
+    dfa['start_states'] = [nfa['start_states']]
+    dfa['final_states'] = []
+    for states in dfa['states']:
         for state in states:
-            for func in nfa['transition_matrix']:
-                if state == func[0] and inp == func[1]:
-                    temp.append(func[2])
-        dfa['transition_matrix'].append([states, inp, temp])
+            if state in nfa['final_states'] and states not in dfa['final_states']:
+                dfa['final_states'].append(states)
 
-dfa['start_states'] = [nfa['start_states']]
-dfa['final_states'] = []
-for states in dfa['states']:
-    for state in states:
-        if state in nfa['final_states'] and states not in dfa['final_states']:
-            dfa['final_states'].append(states)
+    with open(sys.argv[2], 'w') as output:
+        output.write(json.dumps(dfa, indent=4))
 
-with open('output.json', 'w') as outjson:
-    outjson.write(json.dumps(dfa, indent=4))
+
+main()
