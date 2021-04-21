@@ -6,7 +6,7 @@ def removeUnreachable(dfa):
     newdfa = {}
     newdfa['states'] = []
     newdfa['letters'] = dfa['letters']
-    newdfa['transition_matrix'] = []
+    newdfa['transition_function'] = []
     newdfa['start_states'] = dfa['start_states']
     newdfa['final_states'] = []
     q = []
@@ -15,9 +15,9 @@ def removeUnreachable(dfa):
     isreached = []
     while q:
         state = q.pop()
-        for start, letter, end in dfa['transition_matrix']:
+        for start, letter, end in dfa['transition_function']:
             if start == state:
-                newdfa['transition_matrix'].append([start, letter, end])
+                newdfa['transition_function'].append([start, letter, end])
                 if not end in newdfa['states']:
                     newdfa['states'].append(end)
                     q.append(end)
@@ -27,17 +27,19 @@ def removeUnreachable(dfa):
     return newdfa
 
 
-def endStates(state, dfa):
-    states = set()
-    for start, _, end in dfa['transition_matrix']:
-        if start == state:
-            states.add(end)
-    return list(states)
+def endStates(state, letter, dfa, partitions):
+    for start, l, end in dfa['transition_function']:
+        if start == state and letter == l:
+            for i, partition in enumerate(partitions):
+                if end in partition:
+                    return i
+    return None
 
 
-def sameState(state1, state2, dfa):
-    if endStates(state1, dfa) != endStates(state2, dfa):
-        return False
+def sameState(state1, state2, partitions, dfa):
+    for letter in dfa['letters']:
+        if endStates(state1, letter, dfa, partitions) != endStates(state2, letter, dfa, partitions):
+            return False
     return True
 
 
@@ -45,18 +47,23 @@ def createNewPartition(partitions, dfa):
     totalPartitions = []
     for partition in partitions:
         newPartitions = []
-        isCompared = [0 for state in partition]
+        isSelected = [False for state in partition]
         for i, state in enumerate(partition):
-            if isCompared[i]:
+            if isSelected[i]:
                 continue
             similarStates = []
             for j, nextstate in enumerate(partition[i:]):
-                if isCompared[j]:
+                # print(state, nextstate, partition[i:], len(
+                # isSelected), j, isSelected[i+j])
+                if isSelected[i+j]:
                     continue
-                if sameState(state, nextstate, dfa):
-                    isCompared[j] = True
+                # print(state, nextstate, sameState(
+                    # state, nextstate, partition, dfa))
+                if sameState(state, nextstate, partitions, dfa):
+                    isSelected[j] = True
                     similarStates.append(nextstate)
             newPartitions.append(similarStates)
+        # print(newPartitions)
         totalPartitions += newPartitions
     return totalPartitions
 
@@ -72,7 +79,7 @@ def merge(partitions, dfa):
     newdfa = {}
     newdfa['states'] = []
     newdfa['letters'] = dfa['letters']
-    newdfa['transition_matrix'] = []
+    newdfa['transition_function'] = []
     newdfa['start_states'] = []
     newdfa['final_states'] = []
 
@@ -81,32 +88,36 @@ def merge(partitions, dfa):
             if state in dfa['final_states']:
                 if partition not in newdfa['final_states']:
                     newdfa['final_states'].append(partition)
+            if state in dfa['start_states']:
                 if partition not in newdfa['start_states']:
                     newdfa['start_states'].append(partition)
         newdfa['states'].append(partition)
 
-    for start, letter, end in dfa['transition_matrix']:
+    for start, letter, end in dfa['transition_function']:
         transition = [newState(start, partitions), letter,
                       newState(end, partitions)]
-        if transition not in newdfa['transition_matrix']:
-            newdfa['transition_matrix'].append(transition)
+        if transition not in newdfa['transition_function']:
+            newdfa['transition_function'].append(transition)
     return newdfa
 
 
 def main():
     if(len(sys.argv) != 3):
-        print("not enough arguments")
+        # print("not enough arguments")
         quit()
     with open(sys.argv[1], 'r') as input:
         dfa = json.loads(input.read())
     dfa = removeUnreachable(dfa)
+    # print(dfa)
     partitions = []
     partitions.append(dfa['final_states'])
     partitions += [list((set(dfa['states'])-set(dfa['final_states'])))]
     finaldfa = {}
+    # print(partitions)
     while True:
         new_partitions = createNewPartition(partitions, dfa)
-        if new_partitions == partitions:
+        # print(new_partitions)
+        if sorted(new_partitions) == sorted(partitions):
             finaldfa = merge(partitions, dfa)
             with open(sys.argv[2], 'w') as output:
                 output.write(json.dumps(finaldfa, indent=4))
