@@ -1,4 +1,5 @@
 import json
+import sys
 operators = {
     "+": 1,
     '.': 2,
@@ -150,10 +151,11 @@ def nfa(postfix):
 
 
 def main():
-    # infix = input()
-    with open('input.json') as reg:
+    if(len(sys.argv) != 3):
+        print("not enough arguments")
+        quit()
+    with open(sys.argv[1]) as reg:
         infix = json.load(reg)['regex']
-    # print("input: ", infix)
     i = 0
     while True:
         if len(infix) < 2:
@@ -164,13 +166,18 @@ def main():
         i += 1
         if(i == len(infix)-1):
             break
-
+    if infix == "":
+        infix = ' '
     postfix = topostfix(infix)
     # print("postfix: ", postfix)
     final = nfa(postfix)
     # print(final)
-    with open('output.json', 'w') as outjson:
-        outjson.write(json.dumps(final, indent=4))
+    if infix == " ":
+        final['letters'] = [""]
+        for transition in final['transition_matrix']:
+            transition[1] = ""
+    with open(sys.argv[2], 'w') as output:
+        output.write(json.dumps(final, indent=4))
 
 
 main()
